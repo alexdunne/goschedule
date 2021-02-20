@@ -41,3 +41,7 @@ func (s *Server) Open() error {
 
 	return http.ListenAndServe(addr, s.router)
 }
+
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.router.ServeHTTP(w, r)
+}
