@@ -58,35 +58,57 @@ func (s *Storage) BeginTx(ctx context.Context) (*Tx, error) {
 	}, nil
 }
 
-func (s *Storage) CreateAccount(ctx context.Context, account *accounts.NewAccount) error {
-	newUser := User{
-		ID:    storage.GenerateID(),
-		Name:  account.Name,
-		Email: account.Email,
-	}
-
-	newUserExternaLogin := UserExternalLogin{
-		ID:       storage.GenerateID(),
-		UserID:   newUser.ID,
-		Source:   account.Source,
-		SourceID: account.SourceID,
-	}
-
+func (s *Storage) CreateAccount(ctx context.Context, account *accounts.Account) error {
 	tx, err := s.BeginTx(ctx)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback(ctx)
 
-	if err := createUser(ctx, tx, &newUser); err != nil {
+	// First check if we already have an existing auth for this source and source id combo
+	if existing, err := findUserExternalLoginBySourceID(
+		ctx,
+		tx,
+		account.Source,
+		account.SourceID,
+	); err == nil {
+		zap.S().Debugf("UserExternalLogin aleady exists for %+v", account)
+		user, err := findUserByID(ctx, tx, existing.UserID)
+
+		if err != nil {
+			return err
+		}
+
+		account.UserID = user.ID
+		return tx.Commit(ctx)
+	} else if err != pgx.ErrNoRows {
 		return err
 	}
 
-	if err := createUserExternalLogin(ctx, tx, &newUserExternaLogin); err != nil {
+	zap.S().Debugf("UserExternalLogin does not exist for %+v. Creating a new user and external login now", account)
+
+	user := User{
+		ID:    storage.GenerateID(),
+		Name:  account.Name,
+		Email: account.Email,
+	}
+
+	userExternaLogin := UserExternalLogin{
+		ID:       storage.GenerateID(),
+		UserID:   user.ID,
+		Source:   account.Source,
+		SourceID: account.SourceID,
+	}
+
+	if err := createUser(ctx, tx, &user); err != nil {
 		return err
 	}
 
-	account.UserID = newUser.ID
+	if err := createUserExternalLogin(ctx, tx, &userExternaLogin); err != nil {
+		return err
+	}
+
+	account.UserID = user.ID
 
 	return tx.Commit(ctx)
 }
@@ -101,6 +123,8 @@ func createUser(ctx context.Context, tx *Tx, user *User) error {
 		user.ID,
 		user.Name,
 		user.Email,
+		user.CreatedAt,
+		user.UpdatedAt,
 	)
 	if err != nil {
 		return err
@@ -109,7 +133,7 @@ func createUser(ctx context.Context, tx *Tx, user *User) error {
 	return nil
 }
 
-func createUserExternalLogin(ctx context.Context, tx pgx.Tx, userExternalLogin *UserExternalLogin) error {
+func createUserExternalLogin(ctx context.Context, tx *Tx, userExternalLogin *UserExternalLogin) error {
 	_, err := tx.Exec(ctx, `
 	INSERT INTO user_external_logins(id, user_id, source, source_id, created_at, updated_at) 
 	VALUES ($1, $2, $3, $4, $5, $6)`,
@@ -125,4 +149,51 @@ func createUserExternalLogin(ctx context.Context, tx pgx.Tx, userExternalLogin *
 	}
 
 	return nil
+}
+
+func findUserByID(ctx context.Context, tx *Tx, id string) (*User, error) {
+	sqlStmt := `
+		SELECT id, name, email, created_at, updated_at
+		FROM users
+		WHERE id = $1
+	`
+
+	row := tx.QueryRow(ctx, sqlStmt, id)
+
+	var user User
+	if err := row.Scan(
+		&user.ID,
+		&user.Name,
+		&user.Email,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	); err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func findUserExternalLoginBySourceID(ctx context.Context, tx *Tx, source, sourceID string) (*UserExternalLogin, error) {
+	sqlStmt := `
+		SELECT id, user_id, source, source_id, created_at, updated_at
+		FROM user_external_logins
+		WHERE source = $1 AND source_id = $2
+	`
+
+	row := tx.QueryRow(ctx, sqlStmt, source, sourceID)
+
+	var externalLogin UserExternalLogin
+	if err := row.Scan(
+		&externalLogin.ID,
+		&externalLogin.UserID,
+		&externalLogin.Source,
+		&externalLogin.SourceID,
+		&externalLogin.CreatedAt,
+		&externalLogin.UpdatedAt,
+	); err != nil {
+		return nil, err
+	}
+
+	return &externalLogin, nil
 }

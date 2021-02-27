@@ -4,7 +4,7 @@ const (
 	AuthSourceGitHub = "github"
 )
 
-type NewAccount struct {
+type Account struct {
 	Name     string
 	Email    string
 	Source   string
@@ -13,6 +13,6 @@ type NewAccount struct {
 	UserID string
 }
 
-func (a *NewAccount) Validate() error {
+func (a *Account) Validate() error {
 	return nil
 }

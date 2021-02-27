@@ -1,13 +1,15 @@
 package accounts
 
-import "context"
+import (
+	"context"
+)
 
 type Repository interface {
-	CreateAccount(ctx context.Context, account *NewAccount) error
+	CreateAccount(ctx context.Context, account *Account) error
 }
 
 type Service interface {
-	CreateAccount(ctx context.Context, account *NewAccount) error
+	CreateAccount(ctx context.Context, account *Account) error
 }
 
 type service struct {
@@ -22,11 +24,12 @@ func NewService(repo Repository) Service {
 	return s
 }
 
-func (s *service) CreateAccount(ctx context.Context, account *NewAccount) error {
+func (s *service) CreateAccount(ctx context.Context, account *Account) error {
 	if err := account.Validate(); err != nil {
 		return err
 	}
 
 	s.repo.CreateAccount(ctx, account)
+
 	return nil
 }

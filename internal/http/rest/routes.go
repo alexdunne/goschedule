@@ -38,12 +38,7 @@ func (s *Server) handleOAuthGithub(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, render.H{
-		"data": render.H{
-			"url": s.GithubOAuth2Config().AuthCodeURL(session.State),
-		},
-	})
+	http.Redirect(w, r, s.GithubOAuth2Config().AuthCodeURL(session.State), http.StatusFound)
 }
 
 func (s *Server) handleOAuthGitHubCallback(w http.ResponseWriter, r *http.Request) {
@@ -90,7 +85,7 @@ func (s *Server) handleOAuthGitHubCallback(w http.ResponseWriter, r *http.Reques
 		email = *u.Email
 	}
 
-	account := &accounts.NewAccount{
+	account := &accounts.Account{
 		Name:     name,
 		Email:    email,
 		Source:   accounts.AuthSourceGitHub,
