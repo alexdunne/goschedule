@@ -1,0 +1,15 @@
+CREATE TABLE IF NOT EXISTS organisations (
+   "id" VARCHAR(255) PRIMARY KEY, 
+   "name" VARCHAR(255) NOT NULL,
+   "owner_id" VARCHAR(255) REFERENCES users (id), 
+   "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, 
+   "updated_at" TIMESTAMP(3) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS schedules (
+   "id" VARCHAR(255) PRIMARY KEY, 
+   "name" VARCHAR(255) NOT NULL,
+   "owner_id" VARCHAR(255) REFERENCES users (id), 
+   "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, 
+   "updated_at" TIMESTAMP(3) NOT NULL
+);
