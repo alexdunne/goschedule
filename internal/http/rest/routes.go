@@ -109,7 +109,6 @@ func (s *Server) handleOAuthGitHubCallback(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	render.Status(r, http.StatusOK)
 	render.JSON(w, r, render.H{
 		"data": render.H{
 			"user": render.H{

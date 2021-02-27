@@ -5,10 +5,14 @@ const (
 )
 
 type NewAccount struct {
-	Name     string `json:"name"`
-	Email    string `json:"email,omitempty"`
-	Source   string `json:"source"`
-	SourceID string `json:"sourceId"`
+	Name     string
+	Email    string
+	Source   string
+	SourceID string
 
 	UserID string
+}
+
+func (a *NewAccount) Validate() error {
+	return nil
 }

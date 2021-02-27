@@ -23,6 +23,10 @@ func NewService(repo Repository) Service {
 }
 
 func (s *service) CreateAccount(ctx context.Context, account *NewAccount) error {
+	if err := account.Validate(); err != nil {
+		return err
+	}
+
 	s.repo.CreateAccount(ctx, account)
 	return nil
 }
