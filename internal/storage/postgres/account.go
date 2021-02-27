@@ -51,11 +51,32 @@ func (s *Storage) CreateAccount(ctx context.Context, account *accounts.Account) 
 		SourceID: account.SourceID,
 	}
 
+	org := &Organisation{
+		ID:      storage.GenerateID(),
+		Name:    "My Org",
+		OwnerID: user.ID,
+	}
+
+	schedule := &Schedule{
+		ID:             storage.GenerateID(),
+		Name:           "My Schedule",
+		OwnerID:        user.ID,
+		OrganisationID: org.ID,
+	}
+
 	if err := createUser(ctx, tx, &user); err != nil {
 		return err
 	}
 
 	if err := createUserExternalLogin(ctx, tx, &userExternaLogin); err != nil {
+		return err
+	}
+
+	if err := createOrganisation(ctx, tx, org); err != nil {
+		return err
+	}
+
+	if err := createSchedule(ctx, tx, schedule); err != nil {
 		return err
 	}
 

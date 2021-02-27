@@ -70,6 +70,9 @@ func createUser(ctx context.Context, tx *Tx, user *User) error {
 }
 
 func createUserExternalLogin(ctx context.Context, tx *Tx, userExternalLogin *UserExternalLogin) error {
+	userExternalLogin.CreatedAt = tx.now
+	userExternalLogin.UpdatedAt = tx.now
+
 	_, err := tx.Exec(ctx, `
 	INSERT INTO user_external_logins(id, user_id, source, source_id, created_at, updated_at) 
 	VALUES ($1, $2, $3, $4, $5, $6)`,

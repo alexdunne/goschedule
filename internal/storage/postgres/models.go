@@ -17,7 +17,8 @@ type Schedule struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 
-	OwnerID string
+	OwnerID        string
+	OrganisationID string
 }
 
 type User struct {

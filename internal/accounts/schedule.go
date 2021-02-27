@@ -1,9 +1,11 @@
 package accounts
 
 type Schedule struct {
-	ID      string
-	Name    string
-	OwnerID string
+	ID   string
+	Name string
+
+	OrganisationID string
+	OwnerID        string
 }
 
 func (o *Schedule) Validate() error {
